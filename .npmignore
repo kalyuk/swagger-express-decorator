@@ -1,0 +1,9 @@
+.idea
+node_modules/*
+yarn-error.log
+yarn.lock
+src
+.gitignore
+nodemon.json
+tsconfig.json
+tslint.json
