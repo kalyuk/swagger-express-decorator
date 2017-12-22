@@ -102,33 +102,31 @@ export function swaggerController(swagger: Swagger) {
 }
 
 export function swagger(swagger: SwaggerPathDescription = {}) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-
-    if (swagger.parameters) {
-      swagger.parameters.map((param) => {
-        if (param.schema && typeof param.schema === 'function') {
-          param.schema = {
-            $ref: `#/definitions/${param.schema.name}`
-          }
-        }
-        return param;
-      })
-    }
-
+  return function (target: any, propertyKey: string) {
     setMetaData(target.constructor.name, propertyKey, {params: swagger});
     const {url, method, params} = getMetaData(target.constructor.name, propertyKey);
     setPath(url, method, params);
   }
 }
 
-export function swaggerParam(name: string, type: ParamType, required: boolean = false, ref: Function, description?: string) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function swaggerParam(name: string, type: ParamType, params: any = {}) {
+  return function (target: any, propertyKey: string) {
     const meta = getMetaData(target.constructor.name, propertyKey);
+    const data = {name, in: type, ...params};
+
+    if (data.schema) {
+      data.schema = {
+        $ref: `#/definitions/${data.schema.name}`
+      }
+    }
+
     if (!meta.params.parameters) {
       meta.params.parameters = [];
     }
-    meta.params.parameters.push({name, in: type, required, schema: ref, description});
-    return swagger(meta.params)(target, propertyKey, descriptor);
+    meta.params.parameters.push(data);
+
+
+    return swagger(meta.params)(target, propertyKey);
   }
 }
 
@@ -137,11 +135,28 @@ export function swaggerResponse(ref: Function | Function[], statusCode = 200, de
 
     const responses: any = {};
     const data: any = {};
+    const {pagination} = getMetaData(target.constructor.name, propertyKey);
 
     if (ref instanceof Array) {
+
+      if (pagination) {
+
+        data.pageSize = {
+          type: 'string',
+          enum: pagination.sizes
+        };
+        swaggerParam('pageSize', 'query', {type: 'string', enum: pagination.sizes, default: pagination.sizes[0]})(target, propertyKey);
+
+        if (pagination.type === 'classic') {
+          swaggerParam('page', 'query', {type: 'number', default: 1})(target, propertyKey);
+          data.page = {type: 'number'};
+        } else {
+          swaggerParam('cursor', 'query', {type: 'string'})(target, propertyKey);
+          data.cursor = {type: 'string'};
+        }
+      }
+
       data.total = {type: 'number'};
-      data.page = {type: 'number'};
-      data.pageSize = {type: 'number'};
       data.items = {
         type: 'array',
         items: {
@@ -168,7 +183,7 @@ export function swaggerResponse(ref: Function | Function[], statusCode = 200, de
       }
     };
 
-    return swagger({responses})(target, propertyKey, descriptor);
+    return swagger({responses})(target, propertyKey);
   }
 }
 

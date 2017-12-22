@@ -11,7 +11,7 @@ export function setMetaData(name: string, key: string, value: any) {
     if (!metaData[name][key]) {
       metaData[name][key] = {};
     }
-    metaData[name][key] = defaultsDeep( value, metaData[name][key])
+    metaData[name][key] = defaultsDeep(value, metaData[name][key])
   } else {
     metaData[name][key] = value;
   }

@@ -1,6 +1,6 @@
 {
   "name": "swagger-express-decorator",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "main": "index.js",
   "repository": "https://github.com/kalyuk/swagger-express-decorator.git",
   "author": "Dmitry Kalyuk <kalyukdo@gmail.com>",
